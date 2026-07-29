@@ -1,13 +1,23 @@
+import { Link } from 'wouter';
+
 export function HomePage() {
   return (
-    <main className="container">
-      <section className="hello">
-        <h1>Привет! 🚀</h1>
-        <p>Это твой проект. Пока тут пусто — самое интересное впереди.</p>
-        <p className="hello__hint">
-          Открой Codex и опиши свою идею — этот экран станет твоим приложением.
-        </p>
-      </section>
+    <main className="home">
+      <div className="home__badge">Тактика встречает аркаду</div>
+      <h1>БРАС<br /><span>ТЭНД</span></h1>
+      <p>
+        Выбери бойца и оружие, прокачивай характеристики за рубины
+        и сражайся на гибридной арене в режиме «каждый сам за себя».
+      </p>
+      <div className="home__actions">
+        <Link href="/game" className="play-button">Играть сейчас</Link>
+        <Link href="/register" className="register-link">Создать аккаунт</Link>
+      </div>
+      <div className="home__controls">
+        <span>WASD — движение</span>
+        <span>Мышь — прицел</span>
+        <span>V — сменить вид</span>
+      </div>
     </main>
   );
 }
