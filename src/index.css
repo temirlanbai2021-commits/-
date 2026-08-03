@@ -801,7 +801,7 @@ button { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
   .game-stage { border: 0; border-radius: 0; }
   .mobile-controls {
     position: absolute; z-index: 4; inset: auto 8px 10px; display: block;
-    height: 70px; pointer-events: none;
+    height: 88px; pointer-events: none;
   }
   .desktop-ability-controls { display: none; }
   .mobile-controls button {
@@ -809,16 +809,16 @@ button { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
     font-weight: 900; touch-action: none; user-select: none; pointer-events: auto;
   }
   .mobile-controls button:active { transform: scale(.92); filter: brightness(1.25); }
-  .move-pad { position: absolute; left: 0; bottom: 0; display: grid; grid-template-columns: repeat(3, 32px); grid-template-rows: repeat(2, 32px); gap: 2px; }
-  .move-pad button { width: 32px; height: 32px; padding: 0; border-radius: 9px; font-size: 11px; }
+  .move-pad { position: absolute; left: 0; bottom: 0; display: grid; grid-template-columns: repeat(3, 42px); grid-template-rows: repeat(2, 42px); gap: 3px; }
+  .move-pad button { width: 42px; height: 42px; padding: 0; border-radius: 11px; font-size: 14px; }
   .move-pad .move-up { grid-column: 2; grid-row: 1; }
   .move-pad .move-left { grid-column: 1; grid-row: 2; }
   .move-pad .move-down { grid-column: 2; grid-row: 2; }
   .move-pad .move-right { grid-column: 3; grid-row: 2; }
-  .action-pad { position: absolute; right: 0; bottom: 0; display: grid; grid-template-columns: 32px 48px; grid-template-rows: 32px 32px; gap: 3px; }
-  .action-pad button { width: 32px; height: 32px; padding: 0; border-radius: 50%; font-size: 10px; }
-  .action-pad .hyper-button { font-size: 6px; }
-  .action-pad .fire-button { grid-column: 2; grid-row: 1 / 3; align-self: center; width: 48px; height: 48px; color: #17210a; background: #ffd64ddd; font-size: 8px; }
+  .action-pad { position: absolute; right: 0; bottom: 0; display: grid; grid-template-columns: 42px 56px; grid-template-rows: 42px 42px; gap: 3px; }
+  .action-pad button { width: 42px; height: 42px; padding: 0; border-radius: 50%; font-size: 12px; }
+  .action-pad .hyper-button { font-size: 7px; }
+  .action-pad .fire-button { grid-column: 2; grid-row: 1 / 3; align-self: center; width: 56px; height: 56px; color: #17210a; background: #ffd64ddd; font-size: 9px; }
   .pass-panel { padding: 18px 14px; }
   .pass-level { grid-template-columns: 34px 1fr 1fr; }
   .pass-level strong, .pass-level span { padding: 9px 4px; font-size: 10px; }
