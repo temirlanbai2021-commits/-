@@ -1,15 +1,65 @@
-import type { FighterId, Loadout } from './catalog';
+import type { ElementId, FighterId, Loadout } from './catalog';
+import type { BattleMode } from './battleMode';
 
 export type CameraMode = 'firstPerson' | 'topDown';
-export type Fighter = { x: number; y: number; angle: number; health: number; maxHealth: number };
-export type Enemy = Fighter & { id: number; hitFlash: number; fighterId: FighterId };
-export type Bullet = { id: number; x: number; y: number; vx: number; vy: number; life: number };
+export type Fighter = {
+  x: number; y: number; angle: number; health: number; maxHealth: number; crystals?: number;
+};
+export type Enemy = Fighter & {
+  id: number;
+  hitFlash: number;
+  fighterId: FighterId;
+  elementId: ElementId;
+  lastAttack: number;
+  slowedUntil: number;
+  stunnedUntil: number;
+  burningUntil: number;
+  airborneUntil: number;
+  landingDamage: number;
+  superCharge: number;
+  hyperCharge: number;
+  hyperUntil: number;
+  healthBonus: number;
+  damagePower: number;
+  speedPower: number;
+  cooldownPower: number;
+};
+export type Bullet = {
+  id: number;
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  life: number;
+  damage: number;
+  elementId: ElementId;
+  team: 'player' | 'enemy';
+  ownerFighterId?: FighterId;
+  pierce?: number;
+  hitEnemyIds?: number[];
+};
+export type ArenaCrystal = { id: number; x: number; y: number };
+export type FootballBall = {
+  x: number; y: number; vx: number; vy: number;
+  ownerTeam: 'player' | 'enemy' | null;
+  ownerId: number | 'player' | null;
+  blockedOwnerId: number | 'player' | null;
+  pickupBlockedUntil: number;
+  lastKickTeam: 'player' | 'enemy' | null;
+};
 
 export type GameState = {
   player: Fighter;
+  playerVelocity: { x: number; y: number };
   enemies: Enemy[];
+  allies: Enemy[];
   bullets: Bullet[];
+  crystals: ArenaCrystal[];
+  footballBall: FootballBall;
+  footballScore: { player: number; enemy: number };
   loadout: Loadout;
+  battleMode: BattleMode;
+  opponentPower: number;
   score: number;
   rubiesEarned: number;
   ammo: number;
@@ -21,6 +71,26 @@ export type GameState = {
   gameOver: boolean;
   result: 'playing' | 'victory' | 'defeat';
   lastShot: number;
+  territoryProgress: number;
+  enemyTerritoryProgress: number;
+  territoryTime: number;
+  superCharge: number;
+  superFlash: number;
+  hyperCharge: number;
+  hyperUntil: number;
+  hyperFlash: number;
+  shieldUntil: number;
+  lastDamage: number;
+  respawnAt: number;
+  lastCrystalSpawn: number;
+  crystalCountdownEnd: number;
+  crystalCountdownTeam: 'player' | 'enemy' | null;
+  playerCrystals: number;
+  regenUntil: number;
+  invisibleUntil: number;
+  speedBoostUntil: number;
+  burnAuraUntil: number;
+  freezeAuraUntil: number;
 };
 
 export type Controls = {

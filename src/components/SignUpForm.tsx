@@ -12,7 +12,24 @@ export function SignUpForm() {
   const [password, setPassword] = useState('');
   const [passwordRepeat, setPasswordRepeat] = useState('');
   const [status, setStatus] = useState<FormStatus | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [loadingMethod, setLoadingMethod] = useState<'email' | 'google' | null>(null);
+
+  async function handleGoogleSignUp() {
+    setStatus(null);
+    setLoadingMethod('google');
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: { redirectTo: `${window.location.origin}/game` },
+      });
+      if (!error) return;
+      setStatus({ type: 'error', text: `Не удалось войти через Google: ${error.message}` });
+    } catch {
+      setStatus({ type: 'error', text: 'Нет связи с Google. Попробуй ещё раз.' });
+    } finally {
+      setLoadingMethod(null);
+    }
+  }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -23,7 +40,7 @@ export function SignUpForm() {
       return;
     }
 
-    setIsLoading(true);
+    setLoadingMethod('email');
     try {
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -43,7 +60,7 @@ export function SignUpForm() {
     } catch {
       setStatus({ type: 'error', text: 'Нет связи с сервером. Попробуй ещё раз.' });
     } finally {
-      setIsLoading(false);
+      setLoadingMethod(null);
     }
   }
 
@@ -54,6 +71,12 @@ export function SignUpForm() {
         <h1>Создай аккаунт</h1>
         <p>Сохраняй результаты и возвращайся в игру в любое время.</p>
       </div>
+      <button className="google-signup" type="button" onClick={handleGoogleSignUp}
+        disabled={loadingMethod !== null}>
+        <span aria-hidden="true">G</span>
+        {loadingMethod === 'google' ? 'Открываем Google…' : 'Продолжить с Google'}
+      </button>
+      <div className="signup-divider"><span>или через email</span></div>
       <form className="signup-form" onSubmit={handleSubmit}>
         <label>
           Email
@@ -74,8 +97,8 @@ export function SignUpForm() {
         {status && (
           <p className={`signup-status signup-status--${status.type}`} role="status">{status.text}</p>
         )}
-        <button type="submit" disabled={isLoading}>
-          {isLoading ? 'Создаём аккаунт…' : 'Зарегистрироваться'}
+        <button type="submit" disabled={loadingMethod !== null}>
+          {loadingMethod === 'email' ? 'Создаём аккаунт…' : 'Зарегистрироваться'}
         </button>
       </form>
       <Link href="/" className="signup-card__back">← Вернуться на главную</Link>

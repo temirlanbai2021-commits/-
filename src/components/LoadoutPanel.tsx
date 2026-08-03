@@ -1,137 +1,112 @@
-import { fighters, FighterId, getFighter, getWeapon, Loadout, weapons } from '../game/catalog';
+import { elements, fighters, getFighter, Loadout, rarities } from '../game/catalog';
 import type { LobbySection } from './LobbySectionPanel';
-import type { BattleMode } from '../game/battleMode';
-import { BattleModePicker } from './BattleModePicker';
-import { AmmoStore } from './AmmoStore';
-import sparkImage from '../assets/fighters/spark.png';
-import tankImage from '../assets/fighters/tank.png';
-import ghostImage from '../assets/fighters/ghost.png';
-import riotImage from '../assets/fighters/riot.png';
+import type { ReactNode } from 'react';
+import { fighterSources } from '../game/fighterSprites';
+import { getUpgradeCost, MAX_UPGRADE_LEVEL } from '../game/upgrades';
+import { Leaderboard } from './Leaderboard';
 
 type UpgradeKey = 'healthLevel' | 'speedLevel' | 'damageLevel' | 'fireRateLevel';
-
 type Props = {
-  loadout: Loadout;
-  rubies: number;
-  coins: number;
-  trophies: number;
-  fighterXp: number;
-  onChange: (loadout: Loadout) => void;
-  onBuyUpgrade: (key: UpgradeKey) => void;
-  onOpenPass: () => void;
-  onOpenShop: () => void;
-  onOpenSection: (section: LobbySection) => void;
-  onPlay: () => void;
-  battleMode: BattleMode;
-  onBattleModeChange: (mode: BattleMode) => void;
-  ammo: number;
-  onBuyAmmo: () => void;
+  loadout: Loadout; rubies: number; coins: number; trophies: number; fighterTrophies: number; fighterXp: number;
+  onChange: (loadout: Loadout) => void; onBuyUpgrade: (key: UpgradeKey) => void;
+  onOpenPass: () => void; onOpenShop: () => void; onOpenMap: () => void;
+  onOpenFriendly: () => void;
+  onOpenAi: () => void;
+  onOpenSection: (section: LobbySection) => void; onPlay: () => void;
+  account: ReactNode; music: ReactNode;
 };
 
-const upgrades: { key: UpgradeKey; name: string; icon: string }[] = [
-  { key: 'healthLevel', name: 'HP', icon: '♥' },
-  { key: 'speedLevel', name: 'Скорость', icon: '⚡' },
-  { key: 'damageLevel', name: 'Урон', icon: '✦' },
-  { key: 'fireRateLevel', name: 'Темп', icon: '»' },
+const upgrades: { key: UpgradeKey; name: string; benefit: string; icon: string }[] = [
+  { key: 'healthLevel', name: 'Здоровье', benefit: '+12 HP', icon: '♥' },
+  { key: 'speedLevel', name: 'Скорость', benefit: '+13', icon: '⚡' },
+  { key: 'damageLevel', name: 'Урон', benefit: '+12%', icon: '✦' },
+  { key: 'fireRateLevel', name: 'Атака', benefit: 'быстрее', icon: '»' },
 ];
-
-const fighterImages: Record<FighterId, string> = {
-  spark: sparkImage,
-  tank: tankImage,
-  ghost: ghostImage,
-  riot: riotImage,
-};
-
-export function LoadoutPanel({
-  loadout, rubies, coins, trophies, fighterXp, onChange, onBuyUpgrade, onOpenPass, onOpenShop, onPlay,
-  onOpenSection, battleMode, onBattleModeChange, ammo, onBuyAmmo,
-}: Props) {
+export function LoadoutPanel(props: Props) {
+  const {
+    loadout, rubies, coins, trophies, fighterTrophies, fighterXp, onChange, onBuyUpgrade, onOpenPass,
+    onOpenShop, onOpenMap, onOpenFriendly, onOpenAi, onOpenSection, onPlay,
+    account, music,
+  } = props;
   const fighter = getFighter(loadout.fighterId);
-  const weapon = getWeapon(loadout.weaponId);
+  const element = elements[fighter.elementId];
 
   const cycleFighter = (direction: number) => {
     const index = fighters.findIndex((item) => item.id === loadout.fighterId);
-    const next = fighters[(index + direction + fighters.length) % fighters.length];
-    onChange({ ...loadout, fighterId: next.id });
-  };
-
-  const cycleWeapon = (direction: number) => {
-    const index = weapons.findIndex((item) => item.id === loadout.weaponId);
-    const next = weapons[(index + direction + weapons.length) % weapons.length];
-    onChange({ ...loadout, weaponId: next.id });
+    onChange({ ...loadout, fighterId: fighters[(index + direction + fighters.length) % fighters.length].id });
   };
 
   return (
     <section className="battle-lobby">
       <div className="lobby-topbar">
-        <div className="player-card"><i>Б</i><span><strong>BRST PLAYER</strong><small>🏆 {trophies}</small></span></div>
-        <div className="lobby-wallet">
-          <span>🪙 <b>{coins}</b></span><span className="ruby-balance">♦ <b>{rubies}</b></span>
-          <button aria-label="Купить валюту">+</button>
-        </div>
+        <button type="button" className="player-card" onClick={() => onOpenSection('fighters')}>
+          <i>Б</i><span><strong>BRST PLAYER</strong><small>🏆 {trophies}</small></span>
+        </button>
+        <div className="top-trophies"><span>ОБЩИЙ РЕЙТИНГ</span><b>🏆 {trophies}</b></div>
+        {account}
+        <div className="lobby-wallet"><span>🪙 <b>{coins}</b></span><span className="ruby-balance">♦ <b>{rubies}</b></span></div>
       </div>
 
-      <nav className="lobby-rail" aria-label="Разделы игры">
+      <nav className="lobby-rail" aria-label="Главное меню">
         <button type="button" onClick={onOpenShop}><i>🛒</i><span>МАГАЗИН</span></button>
         <button type="button" onClick={() => onOpenSection('fighters')}><i>⭐</i><span>БОЙЦЫ</span></button>
-        <button type="button" onClick={() => onOpenSection('weapons')}><i>🔫</i><span>ОРУЖИЕ</span></button>
-        <button type="button" onClick={onOpenPass}><i>🎫</i><span>БП / VIP</span></button>
+        <button type="button" onClick={onOpenPass}><i>🎫</i><span>ПРОПУСК</span></button>
       </nav>
 
       <div className="fighter-stage">
-        <div className="fighter-rank">
-          СИЛА {loadout.fighterLevel}/12
-          <span>{loadout.fighterLevel === 12 ? 'МАКС.' : `${fighterXp} / ${loadout.fighterLevel * 100} XP`}</span>
+        <div className="fighter-stats">
+          <div className="fighter-trophies"><small>КУБКИ БОЙЦА</small><b>🏆 {fighterTrophies}</b></div>
+          <div className="fighter-rank">СИЛА {loadout.fighterLevel}<span>{fighterXp}/{loadout.fighterLevel * 100} XP</span></div>
         </div>
         <div className="fighter-picker">
-          <button onClick={() => cycleFighter(-1)}>‹</button>
-          <img className="fighter-render" src={fighterImages[fighter.id]} alt={fighter.name} />
-          <button onClick={() => cycleFighter(1)}>›</button>
+          <button type="button" className="fighter-arrow fighter-arrow--left"
+            aria-label="Предыдущий боец" onClick={() => cycleFighter(-1)}>‹</button>
+          <img className={`fighter-render fighter-render--${fighter.elementId}`}
+            src={fighterSources[fighter.id]} alt={fighter.name} />
+          <button type="button" className="fighter-arrow fighter-arrow--right"
+            aria-label="Следующий боец" onClick={() => cycleFighter(1)}>›</button>
         </div>
-        <div className="fighter-name"><small>{fighter.role}</small><h1>{fighter.name}</h1></div>
-        <div className="fighter-roster" aria-label="Выбрать бойца">
-          {fighters.map((item) => (
-            <button type="button" className={item.id === fighter.id ? 'selected' : ''}
-              key={item.id} onClick={() => onChange({ ...loadout, fighterId: item.id })}>
-              <img src={fighterImages[item.id]} alt="" />
-              <span>{item.name}</span>
-            </button>
-          ))}
+        <div className="fighter-name">
+          <small>{fighter.role}</small><h1>{fighter.name}</h1>
+          <b className="fighter-rarity" style={{ color: rarities[fighter.rarity].color }}>
+            {rarities[fighter.rarity].name}
+          </b>
+          <span className="fighter-counter">СЛАБОСТЬ: {getFighter(fighter.counteredBy).name}</span>
         </div>
       </div>
 
       <aside className="lobby-social">
-        <button type="button" onClick={() => onOpenSection('news')}><i>📰</i><span>НОВОСТИ</span></button>
+        {music}
+        <button type="button" onClick={onOpenAi}><i>🤖</i><span>ИИ-ТРЕНЕР</span></button>
+        <button type="button" className="friendly-menu-button" onClick={onOpenFriendly}><i>🤝</i><span>ДРУЖЕСКИЙ</span></button>
+        <button type="button" onClick={onOpenMap}><i>🗺️</i><span>КАРТА</span></button>
         <button type="button" onClick={() => onOpenSection('friends')}><i>👥</i><span>ДРУЗЬЯ</span></button>
-        <button type="button" onClick={() => onOpenSection('clan')}><i>🛡️</i><span>КЛАН</span></button>
+        <Leaderboard trophies={trophies} />
       </aside>
 
-      <div className="upgrade-dock">
+      <section className="upgrade-dock" aria-label="Улучшения бойца">
+        <h2>УЛУЧШЕНИЯ</h2>
         {upgrades.map((upgrade) => (
-          <button key={upgrade.key} disabled={rubies < 25 || loadout[upgrade.key] >= 5}
+          <button type="button" key={upgrade.key}
+            disabled={rubies < getUpgradeCost(loadout[upgrade.key])
+              || loadout[upgrade.key] >= MAX_UPGRADE_LEVEL}
             onClick={() => onBuyUpgrade(upgrade.key)}>
-            <i>{upgrade.icon}</i><span>{upgrade.name}<small>УР. {loadout[upgrade.key]} · 25 ♦</small></span>
+            <i>{upgrade.icon}</i>
+            <span><b>{upgrade.name}</b><small>{upgrade.benefit}</small></span>
+            <em>{loadout[upgrade.key] >= MAX_UPGRADE_LEVEL
+              ? 'МАКС.' : `Ур. ${loadout[upgrade.key]} → ${loadout[upgrade.key] + 1} · ${getUpgradeCost(loadout[upgrade.key])} ♦`}</em>
           </button>
         ))}
-      </div>
+      </section>
 
-      <div className="trophy-road">
-        <b>ПУТЬ СЛАВЫ</b>
-        <div><i style={{ width: `${Math.min(100, trophies / 2)}%` }} /></div>
-        <span>🏆 {trophies} <small>Следующая награда: 200</small></span>
-      </div>
-
-      <AmmoStore ammo={ammo} coins={coins} onBuy={onBuyAmmo} />
-
+      <div className="trophy-road"><b>ПУТЬ СЛАВЫ</b><div><i style={{ width: `${Math.min(100, trophies / 2)}%` }} /></div>
+        <span>🏆 {trophies}<small>Награда: 200</small></span></div>
       <div className="lobby-bottom">
-        <button className="weapon-arrow" onClick={() => cycleWeapon(-1)}>‹</button>
-        <div className="mode-card">
-          <BattleModePicker value={battleMode} onChange={onBattleModeChange} />
-          <strong>ГИБРИДНАЯ АРЕНА</strong>
-          <small>🔫 {weapon.name} · {weapon.kind} · нажми, чтобы сменить</small>
-        </div>
-        <button className="weapon-arrow" onClick={() => cycleWeapon(1)}>›</button>
-        <button type="button" className="battle-button" onClick={onPlay}>В БОЙ!</button>
+        <div className="mode-card"><strong>{element.icon} Стихия: {element.name}</strong>
+          <small>{fighter.ability}</small></div>
+        <button type="button" className="battle-button" onClick={onPlay}>
+          В БОЙ!
+        </button>
       </div>
     </section>
   );

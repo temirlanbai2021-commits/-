@@ -1,12 +1,11 @@
 import type { RealtimeChannel } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
-import type { FighterId, WeaponId } from './catalog';
+import type { FighterId } from './catalog';
 
 export type OnlinePlayer = {
   id: string;
   name: string;
   fighterId: FighterId;
-  weaponId: WeaponId;
   x: number;
   y: number;
   angle: number;
@@ -23,12 +22,13 @@ type ArenaConnection = {
 };
 
 export function connectArena(
+  roomCode: string,
   onPlayers: (players: OnlinePlayer[]) => void,
   onHit: (damage: number) => void,
 ): ArenaConnection {
   const id = crypto.randomUUID();
   const players = new Map<string, OnlinePlayer>();
-  const channel: RealtimeChannel = supabase.channel('public-arena-v1', {
+  const channel: RealtimeChannel = supabase.channel(`friendly-${roomCode.toUpperCase()}`, {
     config: { broadcast: { self: false }, presence: { key: id } },
   });
 

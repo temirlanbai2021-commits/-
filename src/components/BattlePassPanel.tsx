@@ -10,6 +10,7 @@ const levels = [
 ];
 
 export function BattlePassPanel({ onClose }: Props) {
+  const [message, setMessage] = useState('');
   return (
     <div className="pass-overlay" role="dialog" aria-modal="true">
       <section className="pass-panel">
@@ -28,10 +29,12 @@ export function BattlePassPanel({ onClose }: Props) {
         </div>
         <div className="pass-buy">
           <span><b>VIP PASS</b><small>Дополнительные награды сезона</small></span>
-          <button disabled>ПОКУПКА СКОРО</button>
+          <button onClick={() => setMessage('VIP-награды появятся в следующем обновлении.')}>ПОДРОБНЕЕ</button>
         </div>
+        {message && <p className="section-message">{message}</p>}
         <p>Оплата пока отключена: кнопка не списывает реальные деньги.</p>
       </section>
     </div>
   );
 }
+import { useState } from 'react';

@@ -1,12 +1,15 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import type { Loadout } from '../game/catalog';
 import { createGame, reload, shoot, updateGame } from '../game/gameState';
+import { useHypercharge, useSuper } from '../game/abilities';
 import { drawTopDown } from '../game/drawTopDown';
 import { drawFirstPerson } from '../game/drawFirstPerson';
 import type { Controls, GameState } from '../game/types';
 import type { BattleMode } from '../game/battleMode';
 import { connectArena, OnlinePlayer } from '../game/onlineArena';
-import { getWeapon } from '../game/catalog';
+import { getElement } from '../game/catalog';
+import { ARENA_SIZE } from '../game/arenaMap';
+import { ATTACK_POWER } from '../game/combatBalance';
 
 type Props = {
   onUpdate: (state: GameState) => void;
@@ -14,14 +17,18 @@ type Props = {
   loadout: Loadout;
   battleMode: BattleMode;
   ammoStock: number;
+  fighterTrophies: number;
+  roomCode?: string;
+  friendlySide?: 'host' | 'guest';
   onOnlineCount: (count: number) => void;
 };
 
 export function GameCanvas({
-  onUpdate, resetSignal, loadout, battleMode, ammoStock, onOnlineCount,
+  onUpdate, resetSignal, loadout, battleMode, ammoStock, fighterTrophies,
+  roomCode, friendlySide = 'host', onOnlineCount,
 }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const gameRef = useRef(createGame(loadout, battleMode, ammoStock));
+  const gameRef = useRef(createGame(loadout, battleMode, ammoStock, fighterTrophies));
   const controlsRef = useRef<Controls>({ keys: new Set(), mouseX: 0, mouseY: 0 });
   const isFiringRef = useRef(false);
   const onlinePlayersRef = useRef<OnlinePlayer[]>([]);
@@ -34,16 +41,32 @@ export function GameCanvas({
     setStarted(true);
   };
 
-  const startFiring = () => {
+  const pressMove = (key: string) => (event: ReactPointerEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    event.currentTarget.setPointerCapture(event.pointerId);
+    setMoveKey(key, true);
+  };
+
+  const releaseMove = (key: string) => (event: ReactPointerEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+    setMoveKey(key, false);
+  };
+
+  const startFiring = (event: ReactPointerEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    event.currentTarget.setPointerCapture(event.pointerId);
     setStarted(true);
     isFiringRef.current = true;
     fire();
   };
 
   const fire = () => {
-    const ammoBefore = gameRef.current.ammo;
+    const bulletsBefore = gameRef.current.bullets.length;
     shoot(gameRef.current);
-    if (gameRef.current.ammo < ammoBefore) hitOnlinePlayer();
+    if (gameRef.current.bullets.length > bulletsBefore) hitOnlinePlayer();
   };
 
   const stopFiring = () => {
@@ -66,19 +89,31 @@ export function GameCanvas({
       return { player, difference, distance: Math.hypot(player.x - game.player.x, player.y - game.player.y) };
     }).filter(({ difference }) => difference < .14).sort((a, b) => a.distance - b.distance)[0]?.player;
     if (!target) return;
-    connectionRef.current?.hit(target.id, getWeapon(loadout.weaponId).damage);
+    connectionRef.current?.hit(target.id, getElement(loadout.fighterId).damage * ATTACK_POWER);
   };
 
   useEffect(() => {
+    if (battleMode !== 'friendly' || !roomCode) {
+      onlinePlayersRef.current = [];
+      onOnlineCount(0);
+      return;
+    }
     const connection = connectArena(
+      roomCode,
       (players) => {
         onlinePlayersRef.current = players;
         onOnlineCount(players.length + 1);
+        if (players.some((player) => player.health <= 0) && !gameRef.current.gameOver) {
+          gameRef.current.gameOver = true;
+          gameRef.current.result = 'victory';
+          gameRef.current.rubiesEarned = 5;
+        }
       },
       (damage) => {
         const game = gameRef.current;
         if (game.gameOver) return;
         game.player.health = Math.max(0, game.player.health - damage);
+        game.lastDamage = performance.now();
         if (game.player.health === 0) {
           game.gameOver = true;
           game.result = 'defeat';
@@ -92,14 +127,19 @@ export function GameCanvas({
       connectionRef.current = undefined;
       onOnlineCount(0);
     };
-  }, [onOnlineCount]);
+  }, [battleMode, onOnlineCount, roomCode]);
 
   useEffect(() => {
-    gameRef.current = createGame(loadout, battleMode, ammoStock);
+    gameRef.current = createGame(loadout, battleMode, ammoStock, fighterTrophies);
+    if (battleMode === 'friendly' && friendlySide === 'guest') {
+      gameRef.current.player.x = 1380;
+      gameRef.current.player.y = 800;
+      gameRef.current.player.angle = Math.PI;
+    }
     isFiringRef.current = false;
     setStarted(false);
     onUpdate(gameRef.current);
-  }, [resetSignal, loadout, battleMode, ammoStock, onUpdate]);
+  }, [resetSignal, loadout, battleMode, ammoStock, fighterTrophies, friendlySide, onUpdate]);
 
   useEffect(() => {
     const movementKeys: Record<string, string> = {
@@ -114,19 +154,27 @@ export function GameCanvas({
         game.mode = game.mode === 'topDown' ? 'firstPerson' : 'topDown';
       }
       if (key === 'r') reload(gameRef.current);
+      if (key === ' ' && !event.repeat) {
+        event.preventDefault();
+        useSuper(gameRef.current);
+      }
+      if (key === 'q' && !event.repeat) useHypercharge(gameRef.current);
     };
     const up = (event: KeyboardEvent) => {
       const key = movementKeys[event.code] ?? event.key.toLowerCase();
       controlsRef.current.keys.delete(key);
     };
-    const clearMovement = () => controlsRef.current.keys.clear();
+    const clearControls = () => {
+      controlsRef.current.keys.clear();
+      isFiringRef.current = false;
+    };
     window.addEventListener('keydown', down);
     window.addEventListener('keyup', up);
-    window.addEventListener('blur', clearMovement);
+    window.addEventListener('blur', clearControls);
     return () => {
       window.removeEventListener('keydown', down);
       window.removeEventListener('keyup', up);
-      window.removeEventListener('blur', clearMovement);
+      window.removeEventListener('blur', clearControls);
     };
   }, []);
 
@@ -137,17 +185,19 @@ export function GameCanvas({
       const box = canvas.getBoundingClientRect();
       const game = gameRef.current;
       if (game.mode === 'topDown') {
-        const size = Math.min(box.width, box.height);
-        const x = (event.clientX - box.left - (box.width - size) / 2) / size * 900;
-        const y = (event.clientY - box.top - (box.height - size) / 2) / size * 900;
-        game.player.angle = Math.atan2(y - game.player.y, x - game.player.x);
+        const scale = Math.max(box.width / 1000, box.height / 850);
+        const offsetX = Math.min(0, Math.max(box.width - ARENA_SIZE * scale, box.width / 2 - game.player.x * scale));
+        const offsetY = Math.min(0, Math.max(box.height - ARENA_SIZE * scale, box.height / 2 - game.player.y * scale));
+        const x = event.clientX - box.left - (offsetX + game.player.x * scale);
+        const y = event.clientY - box.top - (offsetY + game.player.y * scale);
+        game.player.angle = Math.atan2(y, x);
       } else if (event.movementX) game.player.angle += event.movementX * 0.003;
     };
     const fireFromCanvas = () => {
       setStarted(true);
       if (gameRef.current.mode === 'firstPerson') canvas.requestPointerLock();
       isFiringRef.current = true;
-      shoot(gameRef.current);
+      fire();
     };
     canvas.addEventListener('pointermove', aim);
     canvas.addEventListener('pointerdown', fireFromCanvas);
@@ -186,7 +236,6 @@ export function GameCanvas({
         connectionRef.current?.sendState({
           name: 'Игрок',
           fighterId: current.loadout.fighterId,
-          weaponId: current.loadout.weaponId,
           x: current.player.x,
           y: current.player.y,
           angle: current.player.angle,
@@ -206,22 +255,35 @@ export function GameCanvas({
     <div className="game-canvas-wrap">
       <canvas ref={canvasRef} className="game-canvas" />
       {!started && <div className="game-tip">Нажми на арену, чтобы начать</div>}
+      <div className="desktop-ability-controls">
+        <button type="button" disabled={gameRef.current.superCharge < 100}
+          onClick={() => useSuper(gameRef.current)}>★ УЛЬТА <kbd>ПРОБЕЛ</kbd></button>
+        <button type="button" disabled={gameRef.current.hyperCharge < 100}
+          onClick={() => useHypercharge(gameRef.current)}>ГИПЕР <kbd>Q</kbd></button>
+      </div>
       <div className="mobile-controls">
         <div className="move-pad">
-          <button className="move-up" onPointerDown={() => setMoveKey('w', true)}
-            onPointerUp={() => setMoveKey('w', false)} onPointerCancel={() => setMoveKey('w', false)}>▲</button>
-          <button onPointerDown={() => setMoveKey('a', true)}
-            onPointerUp={() => setMoveKey('a', false)} onPointerCancel={() => setMoveKey('a', false)}>◀</button>
-          <button onPointerDown={() => setMoveKey('s', true)}
-            onPointerUp={() => setMoveKey('s', false)} onPointerCancel={() => setMoveKey('s', false)}>▼</button>
-          <button onPointerDown={() => setMoveKey('d', true)}
-            onPointerUp={() => setMoveKey('d', false)} onPointerCancel={() => setMoveKey('d', false)}>▶</button>
+          <button className="move-up" type="button" aria-label="Вперёд" onPointerDown={pressMove('w')}
+            onPointerUp={releaseMove('w')} onPointerCancel={releaseMove('w')}>▲</button>
+          <button className="move-left" type="button" aria-label="Влево" onPointerDown={pressMove('a')}
+            onPointerUp={releaseMove('a')} onPointerCancel={releaseMove('a')}>◀</button>
+          <button className="move-down" type="button" aria-label="Вниз" onPointerDown={pressMove('s')}
+            onPointerUp={releaseMove('s')} onPointerCancel={releaseMove('s')}>▼</button>
+          <button className="move-right" type="button" aria-label="Вправо" onPointerDown={pressMove('d')}
+            onPointerUp={releaseMove('d')} onPointerCancel={releaseMove('d')}>▶</button>
         </div>
         <div className="action-pad">
-          <button onClick={toggleCamera}>V</button>
-          <button onClick={() => reload(gameRef.current)}>R</button>
-          <button className="fire-button" onPointerDown={startFiring}
-            onPointerUp={stopFiring} onPointerCancel={stopFiring}>ОГОНЬ</button>
+          <button type="button" onClick={toggleCamera}>V</button>
+          <button disabled={gameRef.current.superCharge < 100}
+            className={`super-button ${gameRef.current.superCharge >= 100 ? 'ready' : ''}`}
+            onClick={() => useSuper(gameRef.current)}>★</button>
+          <button disabled={gameRef.current.hyperCharge < 100}
+            className={`hyper-button ${gameRef.current.hyperCharge >= 100 ? 'ready' : ''}`}
+            onClick={() => useHypercharge(gameRef.current)}>ГИПЕР</button>
+          <button type="button" className="fire-button" onPointerDown={startFiring}
+            onPointerUp={stopFiring} onPointerCancel={stopFiring}>
+            {battleMode === 'football' ? 'УДАР' : 'ОГОНЬ'}
+          </button>
         </div>
       </div>
     </div>
