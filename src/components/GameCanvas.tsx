@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { Loadout } from '../game/catalog';
 import { createGame, reload, shoot, updateGame } from '../game/gameState';
 import { useHypercharge, useSuper } from '../game/abilities';
@@ -10,6 +10,7 @@ import { connectArena, OnlinePlayer } from '../game/onlineArena';
 import { getElement } from '../game/catalog';
 import { ARENA_SIZE } from '../game/arenaMap';
 import { ATTACK_POWER } from '../game/combatBalance';
+import { MobileGameControls } from './MobileGameControls';
 
 type Props = {
   onUpdate: (state: GameState) => void;
@@ -41,23 +42,11 @@ export function GameCanvas({
     setStarted(true);
   };
 
-  const pressMove = (key: string) => (event: ReactPointerEvent<HTMLButtonElement>) => {
-    event.preventDefault();
-    event.currentTarget.setPointerCapture(event.pointerId);
-    setMoveKey(key, true);
+  const moveWithJoystick = (keys: Set<string>) => {
+    for (const key of ['w', 'a', 's', 'd']) setMoveKey(key, keys.has(key));
   };
 
-  const releaseMove = (key: string) => (event: ReactPointerEvent<HTMLButtonElement>) => {
-    event.preventDefault();
-    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-      event.currentTarget.releasePointerCapture(event.pointerId);
-    }
-    setMoveKey(key, false);
-  };
-
-  const startFiring = (event: ReactPointerEvent<HTMLButtonElement>) => {
-    event.preventDefault();
-    event.currentTarget.setPointerCapture(event.pointerId);
+  const startFiring = () => {
     setStarted(true);
     isFiringRef.current = true;
     fire();
@@ -261,31 +250,17 @@ export function GameCanvas({
         <button type="button" disabled={gameRef.current.hyperCharge < 100}
           onClick={() => useHypercharge(gameRef.current)}>ГИПЕР <kbd>Q</kbd></button>
       </div>
-      <div className="mobile-controls">
-        <div className="move-pad">
-          <button className="move-up" type="button" aria-label="Вперёд" onPointerDown={pressMove('w')}
-            onPointerUp={releaseMove('w')} onPointerCancel={releaseMove('w')}>▲</button>
-          <button className="move-left" type="button" aria-label="Влево" onPointerDown={pressMove('a')}
-            onPointerUp={releaseMove('a')} onPointerCancel={releaseMove('a')}>◀</button>
-          <button className="move-down" type="button" aria-label="Вниз" onPointerDown={pressMove('s')}
-            onPointerUp={releaseMove('s')} onPointerCancel={releaseMove('s')}>▼</button>
-          <button className="move-right" type="button" aria-label="Вправо" onPointerDown={pressMove('d')}
-            onPointerUp={releaseMove('d')} onPointerCancel={releaseMove('d')}>▶</button>
-        </div>
-        <div className="action-pad">
-          <button type="button" onClick={toggleCamera}>V</button>
-          <button disabled={gameRef.current.superCharge < 100}
-            className={`super-button ${gameRef.current.superCharge >= 100 ? 'ready' : ''}`}
-            onClick={() => useSuper(gameRef.current)}>★</button>
-          <button disabled={gameRef.current.hyperCharge < 100}
-            className={`hyper-button ${gameRef.current.hyperCharge >= 100 ? 'ready' : ''}`}
-            onClick={() => useHypercharge(gameRef.current)}>ГИПЕР</button>
-          <button type="button" className="fire-button" onPointerDown={startFiring}
-            onPointerUp={stopFiring} onPointerCancel={stopFiring}>
-            {battleMode === 'football' ? 'УДАР' : 'ОГОНЬ'}
-          </button>
-        </div>
-      </div>
+      <MobileGameControls
+        superReady={gameRef.current.superCharge >= 100}
+        hyperReady={gameRef.current.hyperCharge >= 100}
+        isFootball={battleMode === 'football'}
+        onMove={moveWithJoystick}
+        onFireStart={startFiring}
+        onFireStop={stopFiring}
+        onSuper={() => useSuper(gameRef.current)}
+        onHyper={() => useHypercharge(gameRef.current)}
+        onCamera={toggleCamera}
+      />
     </div>
   );
 }

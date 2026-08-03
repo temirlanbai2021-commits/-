@@ -801,7 +801,7 @@ button { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
   .game-stage { border: 0; border-radius: 0; }
   .mobile-controls {
     position: absolute; z-index: 4; inset: auto 8px 10px; display: block;
-    height: 88px; pointer-events: none;
+    height: 110px; pointer-events: none;
   }
   .desktop-ability-controls { display: none; }
   .mobile-controls button {
@@ -809,12 +809,16 @@ button { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
     font-weight: 900; touch-action: none; user-select: none; pointer-events: auto;
   }
   .mobile-controls button:active { transform: scale(.92); filter: brightness(1.25); }
-  .move-pad { position: absolute; left: 0; bottom: 0; display: grid; grid-template-columns: repeat(3, 42px); grid-template-rows: repeat(2, 42px); gap: 3px; }
-  .move-pad button { width: 42px; height: 42px; padding: 0; border-radius: 11px; font-size: 14px; }
-  .move-pad .move-up { grid-column: 2; grid-row: 1; }
-  .move-pad .move-left { grid-column: 1; grid-row: 2; }
-  .move-pad .move-down { grid-column: 2; grid-row: 2; }
-  .move-pad .move-right { grid-column: 3; grid-row: 2; }
+  .move-joystick {
+    position: absolute; left: 4px; bottom: 0; width: 104px; height: 104px;
+    border: 2px solid #ffffff2e; border-radius: 50%; background: #07121788;
+    box-shadow: inset 0 0 22px #0008; touch-action: none; pointer-events: auto;
+  }
+  .move-joystick span {
+    position: absolute; top: 29px; left: 29px; width: 42px; height: 42px;
+    border: 2px solid #ffffff55; border-radius: 50%; background: #9bb8c7cc;
+    box-shadow: 0 3px 10px #0008; pointer-events: none;
+  }
   .action-pad { position: absolute; right: 0; bottom: 0; display: grid; grid-template-columns: 42px 56px; grid-template-rows: 42px 42px; gap: 3px; }
   .action-pad button { width: 42px; height: 42px; padding: 0; border-radius: 50%; font-size: 12px; }
   .action-pad .hyper-button { font-size: 7px; }
