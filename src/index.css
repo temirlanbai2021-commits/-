@@ -506,6 +506,10 @@ button { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
   padding: 8px 11px; border: 0; border-radius: 8px; color: #102018;
   background: #70e3b9; font-size: 9px; font-weight: 900;
 }
+.player-name-form { display: block !important; padding: 12px; border-radius: 10px; background: #10252d; }
+.player-name-form label, .player-name-form small { display: block; color: #91a8b3; font-size: 9px; font-weight: 800; }
+.player-name-form > div { display: flex; gap: 6px; margin: 6px 0; }
+.player-name-form > div input { min-width: 0; flex: 1; }
 .real-friends h3 { margin: 8px 0 0; color: #ffd166; font-size: 11px; }
 .real-friends article {
   display: flex; align-items: center; justify-content: space-between; gap: 10px;

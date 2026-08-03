@@ -44,7 +44,7 @@ export function GameAccount({ onBeforeSignOut }: GameAccountProps) {
   }
 
   const metadata = session.user.user_metadata;
-  const name = String(metadata.full_name ?? metadata.name ?? session.user.email ?? 'Игрок');
+  const name = String(metadata.display_name ?? metadata.full_name ?? metadata.name ?? session.user.email ?? 'Игрок');
   const avatar = typeof metadata.avatar_url === 'string' ? metadata.avatar_url : '';
 
   return (

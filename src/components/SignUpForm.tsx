@@ -8,6 +8,7 @@ type FormStatus = {
 };
 
 export function SignUpForm() {
+  const [playerName, setPlayerName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [passwordRepeat, setPasswordRepeat] = useState('');
@@ -45,7 +46,10 @@ export function SignUpForm() {
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
-        options: { emailRedirectTo: window.location.origin },
+        options: {
+          emailRedirectTo: window.location.origin,
+          data: { display_name: playerName.trim() },
+        },
       });
 
       if (error) {
@@ -78,6 +82,11 @@ export function SignUpForm() {
       </button>
       <div className="signup-divider"><span>или через email</span></div>
       <form className="signup-form" onSubmit={handleSubmit}>
+        <label>
+          Игровое имя
+          <input value={playerName} onChange={(event) => setPlayerName(event.target.value)}
+            placeholder="Например, Temirlan" minLength={2} maxLength={20} required />
+        </label>
         <label>
           Email
           <input type="email" value={email} onChange={(event) => setEmail(event.target.value)}
