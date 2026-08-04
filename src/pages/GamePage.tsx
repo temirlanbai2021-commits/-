@@ -15,6 +15,7 @@ import { FriendlyBattlePanel } from '../components/FriendlyBattlePanel';
 import { useSavedGameProgress } from '../hooks/useSavedGameProgress';
 import { AiCoachPanel } from '../components/AiCoachPanel';
 import { getUpgradeCost, MAX_UPGRADE_LEVEL } from '../game/upgrades';
+import { BattleModeDialog } from '../components/BattleModeDialog';
 
 type UpgradeKey = 'healthLevel' | 'speedLevel' | 'damageLevel' | 'fireRateLevel';
 
@@ -42,6 +43,7 @@ export function GamePage() {
   const [isMapOpen, setIsMapOpen] = useState(false);
   const [isFriendlyOpen, setIsFriendlyOpen] = useState(false);
   const [isAiOpen, setIsAiOpen] = useState(false);
+  const [isModeOpen, setIsModeOpen] = useState(false);
   const [friendlyRoom, setFriendlyRoom] = useState('');
   const [friendlySide, setFriendlySide] = useState<'host' | 'guest'>('host');
   const [openSection, setOpenSection] = useState<LobbySection | null>(null);
@@ -53,8 +55,14 @@ export function GamePage() {
   const update = useCallback((next: ReturnType<typeof createGame>) => setGame(next), []);
 
   const startBattle = () => {
+    setIsModeOpen(false);
     setIsPlaying(true);
     setResetSignal((value) => value + 1);
+  };
+
+  const selectBattleMode = (mode: BattleMode) => {
+    setBattleMode(mode);
+    startBattle();
   };
 
   const startFriendlyBattle = (roomCode: string, side: 'host' | 'guest') => {
@@ -153,7 +161,7 @@ export function GamePage() {
           fighterXp={progress[loadout.fighterId].xp} onChange={changeLoadout}
           onBuyUpgrade={buyUpgrade} onOpenPass={() => setIsPassOpen(true)}
           onOpenShop={() => setIsShopOpen(true)} onOpenSection={setOpenSection}
-          onPlay={startBattle}
+          onPlay={() => setIsModeOpen(true)}
           onOpenMap={() => setIsMapOpen(true)}
           onOpenFriendly={() => setIsFriendlyOpen(true)}
           onOpenAi={() => setIsAiOpen(true)}
@@ -168,6 +176,10 @@ export function GamePage() {
         <FriendlyBattlePanel onClose={() => setIsFriendlyOpen(false)} onStart={startFriendlyBattle} />
       )}
       {isAiOpen && <AiCoachPanel fighterId={loadout.fighterId} onClose={() => setIsAiOpen(false)} />}
+      {isModeOpen && (
+        <BattleModeDialog value={battleMode} onSelect={selectBattleMode}
+          onClose={() => setIsModeOpen(false)} />
+      )}
       {openSection && (
         <LobbySectionPanel section={openSection} fighterId={loadout.fighterId}
           onSelectFighter={(fighterId) => changeLoadout({ ...loadout, fighterId })}
