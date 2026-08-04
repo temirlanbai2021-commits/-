@@ -928,8 +928,8 @@ button { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
     grid-template-rows: auto minmax(72px, 1fr) auto; align-content: stretch;
     overflow: hidden;
   }
-  .fighter-picker { align-self: stretch; min-height: 0; }
-  .fighter-render { width: 240px; height: min(220px, 30vh); }
+  .fighter-picker { align-self: stretch; min-height: 0; transform: translateY(-16px); }
+  .fighter-render { width: 270px; height: min(245px, 33vh); }
   .fighter-picker > button { font-size: 32px; }
   .fighter-name { margin-top: 0; }
   .fighter-name h1 { font-size: 22px; }
@@ -975,7 +975,8 @@ button { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
   .leaderboard { padding-block: 3px; }
   .leaderboard h2 { display: none; }
   .fighter-stage { grid-template-rows: auto minmax(54px, 1fr) auto; }
-  .fighter-render { width: 180px; height: min(160px, 23vh); }
+  .fighter-picker { transform: translateY(-10px); }
+  .fighter-render { width: 200px; height: min(180px, 25vh); }
   .fighter-name h1 { font-size: 18px; }
   .fighter-counter { display: none; }
   .fighter-roster button { width: min(30px, 8vw); }
