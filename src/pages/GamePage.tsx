@@ -16,10 +16,13 @@ import { useSavedGameProgress } from '../hooks/useSavedGameProgress';
 import { AiCoachPanel } from '../components/AiCoachPanel';
 import { getUpgradeCost, MAX_UPGRADE_LEVEL } from '../game/upgrades';
 import { BattleModeDialog } from '../components/BattleModeDialog';
+import { useLocation } from 'wouter';
 
 type UpgradeKey = 'healthLevel' | 'speedLevel' | 'damageLevel' | 'fireRateLevel';
 
 export function GamePage() {
+  const [location, navigate] = useLocation();
+  const isPlaying = location === '/game/play';
   const { progress: saved, setProgress: setSaved, saveNow } = useSavedGameProgress();
   const { loadout, rubies, coins, trophies, fighterTrophies, fighters: progress, ownedOffers } = saved;
   const setSavedValue = <K extends keyof typeof saved>(key: K, value: typeof saved[K] | ((old: typeof saved[K]) => typeof saved[K])) => {
@@ -47,7 +50,6 @@ export function GamePage() {
   const [friendlyRoom, setFriendlyRoom] = useState('');
   const [friendlySide, setFriendlySide] = useState<'host' | 'guest'>('host');
   const [openSection, setOpenSection] = useState<LobbySection | null>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
   const [battleMode, setBattleMode] = useState<BattleMode>('territory');
   const [onlineCount, setOnlineCount] = useState(0);
   const [game, setGame] = useState(() => createGame(loadout));
@@ -56,8 +58,8 @@ export function GamePage() {
 
   const startBattle = () => {
     setIsModeOpen(false);
-    setIsPlaying(true);
     setResetSignal((value) => value + 1);
+    navigate('/game/play');
   };
 
   const selectBattleMode = (mode: BattleMode) => {
@@ -70,8 +72,8 @@ export function GamePage() {
     setFriendlySide(side);
     setBattleMode('friendly');
     setIsFriendlyOpen(false);
-    setIsPlaying(true);
     setResetSignal((value) => value + 1);
+    navigate('/game/play');
   };
 
   const collectBattleRewards = () => {
@@ -103,7 +105,7 @@ export function GamePage() {
 
   const returnToLobby = () => {
     collectBattleRewards();
-    setIsPlaying(false);
+    navigate('/game');
   };
 
   const restartBattle = () => {

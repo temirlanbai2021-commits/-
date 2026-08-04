@@ -8,7 +8,7 @@ export default function App() {
   return (
     <Switch>
       <Route path="/" component={HomePage} />
-      <Route path="/game" component={GamePage} />
+      <Route path="/game/:screen?" component={GamePage} />
       <Route path="/register" component={RegisterPage} />
       <Route component={NotFoundPage} />
     </Switch>
