@@ -929,7 +929,7 @@ button { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
     overflow: hidden;
   }
   .fighter-picker { align-self: stretch; min-height: 0; }
-  .fighter-render { width: 120px; height: min(112px, 16vh); }
+  .fighter-render { width: 170px; height: min(160px, 22vh); }
   .fighter-picker > button { font-size: 32px; }
   .fighter-name { margin-top: 0; }
   .fighter-name h1 { font-size: 22px; }
@@ -975,7 +975,7 @@ button { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
   .leaderboard { padding-block: 3px; }
   .leaderboard h2 { display: none; }
   .fighter-stage { grid-template-rows: auto minmax(54px, 1fr) auto; }
-  .fighter-render { width: 92px; height: min(82px, 12vh); }
+  .fighter-render { width: 125px; height: min(112px, 17vh); }
   .fighter-name h1 { font-size: 18px; }
   .fighter-counter { display: none; }
   .fighter-roster button { width: min(30px, 8vw); }
